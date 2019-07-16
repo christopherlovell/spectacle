@@ -19,15 +19,11 @@ Args:
 Returns:
   w - 2d array, dimensions (z, a), of weights to apply to SED array
 """
-
-# from libcpp cimport bool
-# from bisect import bisect
 cimport cython
 cimport numpy as np
 import numpy as np
 from cython.parallel import prange
 
-# ctypedef np.float32_t dtype_t
 ctypedef np.float64_t dtype_s
 
 def calculate_weights(np.ndarray[dtype_s, ndim=1] z,
@@ -44,6 +40,12 @@ def calculate_weights(np.ndarray[dtype_s, ndim=1] z,
     cdef np.ndarray[dtype_s,ndim=2] w_init = np.zeros((lenz,lena))#, dtype=np.float32)
     cdef double[:,:] w = w_init
 
+    # check particle array right shape
+    if particle.shape[1] != 3:
+        particle = particle.T
+
+    if particle.shape[0] == 3:
+        print("Warning! the particles array may not be transposed correctly. Should be [P,D] where P is number of particles and D = 3.")
 
     # simple test for sorted z and a arrays
     if z[0] > z[1]:
@@ -53,7 +55,7 @@ def calculate_weights(np.ndarray[dtype_s, ndim=1] z,
         raise ValueError('Age array not sorted ascendingly')
         
 
-    for p in range(1, len(particle)):
+    for p in range(0, len(particle)):
         #metal, age, mass = particle[p]
         metal = particle[p][0]
         age = particle[p][1]
@@ -97,9 +99,6 @@ def calculate_weights(np.ndarray[dtype_s, ndim=1] z,
             w[ihigh,jlow] = w[ihigh,jlow] + mfrac * (1.-jfrac)
             if (jlow != jhigh):
                 w[ihigh,jhigh] = w[ihigh,jhigh] + mfrac * jfrac
-
-
-
 
     return np.asarray(w)
 
