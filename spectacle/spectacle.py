@@ -27,17 +27,32 @@ class spectacle(_spectra.spectra, _photo.photo):
     energy distributions (SEDs) from cosmological hydrodynamic simulations.
     """
 
-    def __init__(self, fname='../derivedSFH/data/full_histories_illustris_hmass.h5', details=''):
+    def __init__(self, fname='../derivedSFH/data/full_histories_illustris_hmass.h5', details='', redshift=None):
         self.package_directory = os.path.dirname(os.path.abspath(__file__))          # location of package
         self.grid_directory = os.path.split(self.package_directory)[0]+'/grids'      # location of SPS grids
         self.filter_directory = os.path.split(self.package_directory)[0]+'/filters'  # location of filters
         self.filename = fname
         self.cosmo = cosmo     # astropy cosmology
         self.age_lim = 0.1     # Young star age limit, used for resampling recent SF, Gyr
-        with h5py.File(self.filename,'r') as f:
-            self.redshift = f.attrs['redshift']
-
         
+        try:
+            with h5py.File(self.filename,'r') as f:
+                self.redshift = f.attrs['redshift']
+        except (IOError,KeyError):
+            if redshift is None:
+                print("No redshift provided! Exiting")
+                raise ValueError('No redshift provided! exiting')
+            else:
+                self.redshift = redshift
+            
+            print("File doesn't exist, creating...")
+            with h5py.File(self.filename,'a') as f:
+                f.attrs['redshift'] = self.redshift
+                print("File created!")
+
+
+        self._initialise_pyphot()
+
         # create temp grid directory
         path = "%s/temp"%self.package_directory
         if not os.path.isdir(path):
@@ -234,10 +249,34 @@ class spectacle(_spectra.spectra, _photo.photo):
                 # raise ValueError('Key already in Subhalos group!')
 
 
+    def delete_arr(self, name, group=''):
+        """
+        Delete Dataset from file
+        """
+        with h5py.File(self.filename, 'a') as f:
+
+            if group not in f:
+                print("Group doesn't exist...")
+                return False
+
+            if name not in list(f['/%s'%group].keys()):
+                print("'%s' Dataset doesn't exist..."%name)
+                return False
+
+            try:
+                del f["/%s/%s"%(group,name)]
+            except KeyError:
+                print("Can't find group/dataset...")
+                return False
+
+            return True
+
+
+
 
     def load_arr(self, name, group=''):
         """
-        Load Subhalo array from file
+        Load Dataset array from file
         """
         with h5py.File(self.filename, 'r') as f:
 
