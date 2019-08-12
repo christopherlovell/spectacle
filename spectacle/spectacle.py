@@ -27,7 +27,7 @@ class spectacle(_spectra.spectra, _photo.photo):
     energy distributions (SEDs) from cosmological hydrodynamic simulations.
     """
 
-    def __init__(self, fname='../derivedSFH/data/full_histories_illustris_hmass.h5', details='', redshift=None):
+    def __init__(self, fname, details='', redshift=None):
         self.package_directory = os.path.dirname(os.path.abspath(__file__))          # location of package
         self.grid_directory = os.path.split(self.package_directory)[0]+'/grids'      # location of SPS grids
         self.filter_directory = os.path.split(self.package_directory)[0]+'/filters'  # location of filters
