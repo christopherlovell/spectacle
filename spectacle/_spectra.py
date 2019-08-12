@@ -16,7 +16,7 @@ class spectra:
         self.age_lookup = np.linspace(lookback_time, lookback_time + self.age_lim, resolution)
         self.a_lookup = np.array([self.cosmo.scale_factor(z_at_value(self.cosmo.lookback_time, a * u.Gyr)) for a in self.age_lookup], dtype=np.float32)
 
-        filename = "%s/temp/lookup_%s_z%03.0fp%.3s_lim%1.0fp%.3s.txt"%(self.package_directory,
+        filename = "%s/lookup_tables/lookup_%s_z%03.0fp%.3s_lim%1.0fp%.3s.txt"%(self.grid_directory,
                                                                        self.cosmo.name, 
                                                                        z, str(z%1)[2:], 
                                                                        self.age_lim,
@@ -24,9 +24,10 @@ class spectra:
 
         np.savetxt(filename, np.array([self.a_lookup, self.age_lookup]))
 
+
     def load_lookup_table(self, z):
 
-        filename = "%s/temp/lookup_%s_z%03.0fp%.3s_lim%1.0fp%.3s.txt"%(self.package_directory,
+        filename = "%s/lookup_tables/lookup_%s_z%03.0fp%.3s_lim%1.0fp%.3s.txt"%(self.grid_directory,
                                                                        self.cosmo.name, 
                                                                        z, str(z%1)[2:],
                                                                        self.age_lim,
@@ -42,14 +43,14 @@ class spectra:
 
 
 
-    def load_grid(self,name='bc03_chab', z0=0.0, grid_directory=''):
+    def load_grid(self,name='bc03_chab', z0=0.0, grid_directory='',verbose=False):
         """
         Load SPS model
         """
         grid_directory = '/research/astro/highz/Students/Chris/sph2sed/grids'
         file_dir = '%s/intrinsic/output/%s.p'%(grid_directory,name)
 
-        # if verbose: print("Loading %s model from: \n\n%s\n"%(name, file_dir))
+        if verbose: print("Loading %s model from: \n\n%s\n"%(name, file_dir))
         temp = pcl.load(open(file_dir, 'rb'))
 
         grid = {'name': name, 'grid': None, 'age': None, 'metallicity':None}
@@ -62,7 +63,7 @@ class spectra:
 
         ## Sort grids
         if grid['age'][z0][0] > grid['age'][z0][1]:
-             # if verbose: print("Age array not sorted ascendingly. Sorting...\n")
+             if verbose: print("Age array not sorted ascendingly. Sorting...\n")
              grid['age'][z0] = grid['age'][z0][::-1]
              grid['age_mask'][z0] = grid['age_mask'][z0][::-1]
              grid['lookback_time'][z0] = grid['lookback_time'][z0][::-1]
@@ -70,7 +71,7 @@ class spectra:
 
 
         if grid['metallicity'][0] > grid['metallicity'][1]:
-            #  if verbose: print("Metallicity array not sorted ascendingly. Sorting...\n")
+            if verbose: print("Metallicity array not sorted ascendingly. Sorting...\n")
             grid['metallicity'] = grid['metallicity'][::-1]
             grid['grid'] = grid['grid'][::-1,:,:]
 
