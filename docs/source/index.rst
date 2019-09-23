@@ -12,7 +12,7 @@ For generating spectra from cosmological simulations. Uses `Schwimmbad <https://
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Contents
 
    file_format
    generating_spectra
@@ -22,7 +22,7 @@ For generating spectra from cosmological simulations. Uses `Schwimmbad <https://
 Contributors
 ------------
 
-.. include:: ../AUTHORS.rst
+.. include:: ../../AUTHORS.rst
 
 
 License & Attribution
@@ -35,7 +35,7 @@ spectacle is free software made available under the MIT License. For details see
 Changelog
 ---------
 
-.. include:: ../HISTORY.rst
+.. include:: ../../HISTORY.rst
 
 
 Indices and tables
