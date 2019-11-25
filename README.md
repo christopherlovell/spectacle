@@ -4,7 +4,7 @@ A module for generating spectra from cosmological simulations. Uses [schwimmbad]
 
 ## Citation
 
-If you use this software, please use the following BibTex citation:
+If you use this software, please cite [this paper](https://academic.oup.com/mnras/article-abstract/490/4/5503/5586582?redirectedFrom=fulltext) using the following:
 
     @article{10.1093/mnras/stz2851,
         author = {Lovell, Christopher C and Acquaviva, Viviana and Thomas, Peter A and Iyer, Kartheik G and Gawiser, Eric and Wilkins, Stephen M},
