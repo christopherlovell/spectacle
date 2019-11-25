@@ -1,9 +1,11 @@
 import pickle as pcl
+import h5py
 import os
 import numpy as np
 from weights import calculate_weights
 import astropy.units as u
 from astropy.cosmology import z_at_value
+
 
 class spectra:
 
@@ -43,23 +45,36 @@ class spectra:
 
 
 
-    def load_grid(self,name='bc03_chab', z0=0.0, grid_directory='',verbose=False):
+    def load_grid(self,name='bc03_chab', z0=0.0,verbose=False):#grid_directory=''
         """
         Load SPS model
         """
-        grid_directory = '/research/astro/highz/Students/Chris/sph2sed/grids'
-        file_dir = '%s/intrinsic/output/%s.p'%(grid_directory,name)
+        fname = '%s/output/%s.h5'%(self.grid_directory,name)
+        if verbose: print("Loading %s model from: \n\n%s\n"%(name, fname))
 
-        if verbose: print("Loading %s model from: \n\n%s\n"%(name, file_dir))
-        temp = pcl.load(open(file_dir, 'rb'))
+        spec = self.load_arr('spec',fname)
+        ages = self.load_arr('ages',fname)
+        Z = self.load_arr('metallicities',fname)
+        wl = self.load_arr('wavelength',fname)
+
 
         grid = {'name': name, 'grid': None, 'age': None, 'metallicity':None}
-        grid['grid'] = temp['Spectra']
-        grid['metallicity'] = temp['Metallicity']
-        grid['age'] = {z0: temp['Age']}  # scale factor
-        grid['lookback_time'] = {z0: self.cosmo.lookback_time((1. / temp['Age']) - 1).value}  # Gyr
-        grid['age_mask'] = {z0: np.ones(len(temp['Age']), dtype='bool')}
-        grid['wavelength'] = temp['Wavelength']
+        #temp = pcl.load(open(file_dir, 'rb'))
+
+        grid['grid'] = spec
+        grid['metallicity'] = Z
+        grid['age'] = {z0: ages}
+        grid['lookback_time'] = {z0: self.cosmo.lookback_time((1. / ages) - 1).value} # Gyr
+        grid['age_mask'] = {z0: np.ones(len(ages), dtype='bool')}
+        grid['wavelength'] = wl
+
+
+        # grid['grid'] = temp['Spectra']
+        # grid['metallicity'] = temp['Metallicity']
+        # grid['age'] = {z0: temp['Age']}  # scale factor
+        # grid['lookback_time'] = {z0: self.cosmo.lookback_time((1. / temp['Age']) - 1).value}  # Gyr
+        # grid['age_mask'] = {z0: np.ones(len(temp['Age']), dtype='bool')}
+        # grid['wavelength'] = temp['Wavelength']
 
         ## Sort grids
         if grid['age'][z0][0] > grid['age'][z0][1]:

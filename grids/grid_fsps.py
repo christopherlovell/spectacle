@@ -1,15 +1,13 @@
 import numpy as np
 import os
-import pickle as pcl
-
 import fsps
 
 from astropy.cosmology import WMAP9 as cosmo
 from astropy.cosmology import z_at_value
 import astropy.units as u
 
-Zsol = 0.0127
-package_dir = os.path.dirname(os.path.abspath(__file__))
+from spectacle import write_data_h5py
+
 
 def grid(Nage=80, NZ=20, nebular=True, dust=False):
     """
@@ -38,44 +36,51 @@ def grid(Nage=80, NZ=20, nebular=True, dust=False):
     # ages = np.linspace(0, cosmo.age(0).value, Nage)
 
     scale_factors = cosmo.scale_factor([z_at_value(cosmo.lookback_time, age * u.Gyr) for age in ages])
-    metallicities = np.linspace(3e-3, 5e-2, num=NZ) / Zsol
+    metallicities = np.linspace(-3, 1, num=NZ)# / Zsol
 
     spec = np.zeros((len(metallicities), len(ages), len(wl)))
 
     for i, Z in enumerate(metallicities):
         for j, a in enumerate(ages):
 
-            sp.params['logzsol'] = np.log10(Z)
-            if nebular: sp.params['gas_logz'] = np.log10(Z)
+            sp.params['logzsol'] = Z
+            if nebular: sp.params['gas_logz'] = Z
 
             spec[i,j] = sp.get_spectrum(tage=a, peraa=True)[1]   # Lsol / AA
 
 
-    return spec, metallicities, scale_factors, wl 
+    return spec, scale_factors, metallicities, wl 
 
 
-def pickle_grid(Nage, NZ, outdir='output/'):
-
-    spec, Z, age, wl = grid(Nage=Nage, NZ=NZ, nebular=False, dust=False)
-
-    Z = Z * Zsol  # pickle files in absolute metal fractions
-
-    pickle = {'Spectra': spec, 'Metallicity': Z, 'Age': age, 'Wavelength': wl}
-
-    pcl.dump(pickle, open('%s/output/fsps.p'%package_dir,'wb'))
+# def pickle_grid(Nage, NZ, outdir='output/'):
+# 
+#     spec, Z, age, wl = grid(Nage=Nage, NZ=NZ, nebular=False, dust=False)
+# 
+#     Z = Z * Zsol  # pickle files in absolute metal fractions
+# 
+#     pickle = {'Spectra': spec, 'Metallicity': Z, 'Age': age, 'Wavelength': wl}
+# 
+#     pcl.dump(pickle, open('%s/output/fsps.p'%package_dir,'wb'))
 
 
 
 if __name__ == "__main__":
 
-    spec, Z, age, wl = grid(nebular=False, dust=False, NZ=40)
-    Z = Z * Zsol  # pickle files in absolute metal fractions
-    pickle = {'Spectra': spec, 'Metallicity': Z, 'Age': age, 'Wavelength': wl}
-    pcl.dump(pickle, open('output/fsps.p','wb'))
+    Nage = 81 
+    NZ = 41 
 
-    spec, Z, age, wl = grid(nebular=True, dust=False, NZ=40)
-    Z = Z * Zsol  # pickle files in absolute metal fractions
-    pickle = {'Spectra': spec, 'Metallicity': Z, 'Age': age, 'Wavelength': wl}
-    pcl.dump(pickle, open('output/fsps_neb.p','wb'))
+    spec, age, Z, wl = grid(nebular=False, dust=False, Nage=Nage, NZ=NZ)
+    
+    fname = 'output/fsps.h5'
+    write_data_h5py(fname,'spec',data=spec, overwrite=True)
+    write_data_h5py(fname,'ages',data=age, overwrite=True)
+    write_data_h5py(fname,'metallicities',data=Z, overwrite=True)
+    write_data_h5py(fname,'wavelength',data=wl, overwrite=True)
 
+    spec, age, Z, wl = grid(nebular=True, dust=False, Nage=Nage, NZ=NZ)
+    fname = 'output/fsps_neb.h5'
+    write_data_h5py(fname,'spec',data=spec, overwrite=True)
+    write_data_h5py(fname,'ages',data=age, overwrite=True)
+    write_data_h5py(fname,'metallicities',data=Z, overwrite=True)
+    write_data_h5py(fname,'wavelength',data=wl, overwrite=True)
 
