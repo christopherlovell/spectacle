@@ -14,10 +14,11 @@ For generating spectra from cosmological simulations. Uses `Schwimmbad <https://
    :maxdepth: 2
    :caption: Contents
 
-   file_format
+   grid_generation
    generating_spectra
    flexible_parallelisation
-   grid_generation
+   file_format
+
    
 
 Contributors
