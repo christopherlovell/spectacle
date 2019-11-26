@@ -24,7 +24,7 @@ def grid(Nage=80, NZ=20, nebular=True, dust=False):
         sp = fsps.StellarPopulation(zcontinuous=1, sfh=0, 
                                     logzsol=0.0, add_neb_emission=nebular,
                                     dust_type=2, dust2=0.2, cloudy_dust=True,  
-                                    dust1=0.0) # dust_type=1, dust2=0.2, dust1=0.2)
+                                    dust1=0.0)
     else:
         sp = fsps.StellarPopulation(zcontinuous=1, sfh=0, cloudy_dust=True,
                                     logzsol=0.0, add_neb_emission=nebular)
@@ -33,10 +33,9 @@ def grid(Nage=80, NZ=20, nebular=True, dust=False):
     wl = np.array(sp.get_spectrum(tage=13, peraa=True)).T[:,0]
 
     ages = np.logspace(-3.5, np.log10(cosmo.age(0).value-0.4), num=Nage, base=10)
-    # ages = np.linspace(0, cosmo.age(0).value, Nage)
 
     scale_factors = cosmo.scale_factor([z_at_value(cosmo.lookback_time, age * u.Gyr) for age in ages])
-    metallicities = np.linspace(-3, 1, num=NZ)# / Zsol
+    metallicities = np.linspace(-3, 1, num=NZ)# log(Z / Zsol)
 
     spec = np.zeros((len(metallicities), len(ages), len(wl)))
 
@@ -50,17 +49,6 @@ def grid(Nage=80, NZ=20, nebular=True, dust=False):
 
 
     return spec, scale_factors, metallicities, wl 
-
-
-# def pickle_grid(Nage, NZ, outdir='output/'):
-# 
-#     spec, Z, age, wl = grid(Nage=Nage, NZ=NZ, nebular=False, dust=False)
-# 
-#     Z = Z * Zsol  # pickle files in absolute metal fractions
-# 
-#     pickle = {'Spectra': spec, 'Metallicity': Z, 'Age': age, 'Wavelength': wl}
-# 
-#     pcl.dump(pickle, open('%s/output/fsps.p'%package_dir,'wb'))
 
 
 

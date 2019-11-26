@@ -233,27 +233,52 @@ class spectacle(_spectra.spectra, _photo.photo):
         return spectra, wavelength
 
 
-    def save_arr(self, arr, name, group='', replace=True):
-        """
-        Load Subhalo array from file
-        """
-        maxshape = tuple([None] * arr.ndim)
-        
-        with h5py.File(self.filename, 'a') as f:
+#     def save_arr(self, arr, name, replace=True):
+#         """
+#         Load Subhalo array from file
+#         """
+#         maxshape = tuple([None] * arr.ndim)
+#         
+#         with h5py.File(self.filename, 'a') as f:
+# 
+# 
+#             if name not in list(f['/%s'%group].keys()):
+#                 f["/%s"%group].create_dataset(name, shape=arr.shape,
+#                                              maxshape=maxshape,data=arr)
+#             else:
+#                 if replace:
+#                     if len(arr) == len(f["/%s/%s"%(group,name)][:]):
+#                         f["/%s/%s"%(group,name)][:] = arr
+#                     else:
+#                         raise ValueError('Error: New data shape not equal to existing shape')
+#                 # raise ValueError('Key already in Subhalos group!')
 
-            if group not in f:
-                f.create_group(group)
 
-            if name not in list(f['/%s'%group].keys()):
-                f["/%s"%group].create_dataset(name, shape=arr.shape,
-                                             maxshape=maxshape,data=arr)
+    def save_arr(self, name, data, filename=None, overwrite=False):
+        if filename is None:
+            filename = self.filename
+
+        check = self._check_h5py(filename, name)
+    
+        with h5py.File(filename, 'a') as h5file:
+            if check:
+                if overwrite:
+                    print('Overwriting data in %s'%name)
+                    del h5file[name]
+                    h5file[name] = data
+                else:
+                    raise ValueError('Dataset already exists, and `overwrite` not set')
             else:
-                if replace:
-                    if len(arr) == len(f["/%s/%s"%(group,name)][:]):
-                        f["/%s/%s"%(group,name)][:] = arr
-                    else:
-                        raise ValueError('Error: New data shape not equal to existing shape')
-                # raise ValueError('Key already in Subhalos group!')
+                h5file.create_dataset(name, data=data)
+    
+    
+    def _check_h5py(self, filename, obj_str):
+        with h5py.File(filename, 'a') as h5file:
+            if obj_str not in h5file:
+                return False
+            else:
+                return True
+    
 
 
     def delete_arr(self, name, group=''):

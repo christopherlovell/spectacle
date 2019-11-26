@@ -9,11 +9,12 @@ def main(pool):
     tacle = spectacle.spectacle(fname='example_data.h5')
     print(tacle.package_directory)
     tacle._clear_spectra()
+    resample_wl = np.loadtxt('wavelength_grid.txt')
 
     shids = tacle.load_arr('Subhalos/ID')
 
     print('z:',tacle.redshift)
-    grid = tacle.load_grid(name='fsps_neb')#, grid_directory=tacle.grid_directory)
+    grid = tacle.load_grid(name='fsps_neb')
     grid = tacle.redshift_grid(grid,tacle.redshift)
     Z = grid['metallicity']
     A = grid['age'][tacle.redshift]
@@ -24,26 +25,24 @@ def main(pool):
     weights = np.array(list(pool.map(lg,shids)))
     pool.close()
 
+    ## Calculate intrinsic spectra
+    intrinsic_spectra = tacle.calc_intrinsic_spectra(weights,grid,z=tacle.redshift)
+    intrinsic_spectra = tacle.rebin_spectra(intrinsic_spectra, grid['wavelength'],resample_wl)
 
     ## Dust metallicity factor
     with h5py.File(tacle.filename, 'r') as f:
-        shids = f['Subhalos/ID'][:]# [:N]
-        sfgmass = f["Subhalos/Star Forming Gas Mass"][:]# [:N]
-        sm30 = 10**f["Subhalos/Stellar Mass 30kpc"][:]# [:N] 
-        sfgmet = f["Subhalos/Stellar Metallicity 30kpc"][:]# [:N]
+        shids = f['Subhalos/ID'][:]
+        sfgmass = f["Subhalos/Star Forming Gas Mass"][:]
+        sm30 = 10**f["Subhalos/Stellar Mass 30kpc"][:] 
+        sfgmet = f["Subhalos/Stellar Metallicity 30kpc"][:]
 
     tau_0 = tacle.tau_0()
     print("tau_0:",tau_0)
-    Z_factor = tacle.metallicity_factor_update(sfgmet,sfgmass,sm30,gas_norm=1,metal_norm=1,tau_0=290)#tau_0)
+    Z_factor = tacle.metallicity_factor_update(sfgmet,sfgmass,sm30,gas_norm=1,metal_norm=1,tau_0=290)
 
-    ## Calculate intrinsic and two-component dust attenuated spectra
-    intrinsic_spectra = tacle.calc_intrinsic_spectra(weights,grid,z=tacle.redshift)
+    ## Calculate two-component dust attenuated spectra
     dust_spectra = tacle.two_component_dust(weights,grid,z=tacle.redshift,
                                             tau_ism=0.33 * Z_factor, tau_cloud=0.67 * Z_factor)
-
-    ## Rebin spectra
-    resample_wl = np.loadtxt('wavelength_grid.txt')
-    intrinsic_spectra = tacle.rebin_spectra(intrinsic_spectra, grid['wavelength'],resample_wl)
     dust_spectra = tacle.rebin_spectra(dust_spectra, grid['wavelength'],resample_wl)
 
     ## Save to HDF5
