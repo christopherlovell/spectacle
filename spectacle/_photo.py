@@ -10,8 +10,8 @@ class photo:
     def _initialise_pyphot(self):
         self.filters = pyphot.get_library()
 
-    @staticmethod
-    def flux_frequency_units(L, wavelength):
+    
+    def flux_frequency_units(self, L, wavelength, restframe=True):
         """
         Convert from Lsol AA^-1 -> erg s^-1 cm^-2 Hz^-1 in restframe (10 pc)
     
@@ -19,8 +19,12 @@ class photo:
             L [Lsol AA^-1]
             wavelength [AA]
         """
+        if restframe:
+            d_factor = 1.1964951828447575e+40  # 4 * pi * (10 pc -> cm)**2
+        else:
+            d_factor = 4 * np.pi * self.cosmo.luminosity_distance(self.redshift).to(u.cm).value**2
+
         c = 2.9979e18    # AA s^-1
-        d_factor = 1.1964951828447575e+40  # 4 * pi * (10 pc -> cm)**2
         Llamb = L * 3.826e33               # erg s^-1 AA^1
         Llamb /= d_factor                  # erg s^-1 cm^-2 AA^-1
         return Llamb * (wavelength**2 / c)   # erg s^-1 cm^-2 Hz^-1 
@@ -78,17 +82,18 @@ class photo:
         else:
             f = self.filters[filter_name]
 
+        spec = spectra.copy()
+
         if restframe_filter:
             filt_lambda = np.array(f.wavelength.to('Angstrom'))
+            spec = self.flux_frequency_units(spec, wavelength, restframe_filter)
         else:
-            filt_lambda = np.array(f.wavelength.to('Angstrom')) / (1+z)
+            filt_lambda = np.array(f.wavelength.to('Angstrom')) / (1+self.redshift)
+            spec = self.flux_frequency_units(spec, wavelength, restframe_filter)
 
 
         # if wavelength is None:
         #     wavelength = self.spectra[spectra]['lambda'] # AA
-
-        spec = spectra.copy() # self.galaxies[idx]['Spectra'][spectra].copy()
-        spec = self.flux_frequency_units(spec, wavelength)
 
         write_name = "%s %s"%(filter_name, spectra)
         M = self.photo(spec, wavelength, f.transmit, filt_lambda)[0]
