@@ -254,12 +254,21 @@ class spectacle(_spectra.spectra, _photo.photo):
 #                 # raise ValueError('Key already in Subhalos group!')
 
 
-    def save_arr(self, name, data, filename=None, overwrite=False):
+    def _check_h5py(self, filename, obj_str):
+        with h5py.File(filename, 'a') as h5file:
+            if obj_str not in h5file:
+                return False
+            else:
+                return True
+
+
+    def save_arr(self, data, name, group, filename=None, overwrite=False):
         if filename is None:
             filename = self.filename
 
+        name = "%s/%s"%(group,name)
         check = self._check_h5py(filename, name)
-    
+
         with h5py.File(filename, 'a') as h5file:
             if check:
                 if overwrite:
@@ -270,15 +279,7 @@ class spectacle(_spectra.spectra, _photo.photo):
                     raise ValueError('Dataset already exists, and `overwrite` not set')
             else:
                 h5file.create_dataset(name, data=data)
-    
-    
-    def _check_h5py(self, filename, obj_str):
-        with h5py.File(filename, 'a') as h5file:
-            if obj_str not in h5file:
-                return False
-            else:
-                return True
-    
+       
 
 
     def delete_arr(self, name, group=''):
@@ -340,4 +341,5 @@ class spectacle(_spectra.spectra, _photo.photo):
                                spec_wavs=wl).T
 
         return resamp_spec
+
 
